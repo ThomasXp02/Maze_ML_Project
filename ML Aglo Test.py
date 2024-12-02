@@ -3,7 +3,6 @@ import numpy as np
 import random
 from matplotlib.animation import FuncAnimation
 from matplotlib import colors
-from collections import deque
 import time
 
 # Maze size and settings
@@ -11,18 +10,11 @@ maze_size = 15
 start_position = (0, 1)
 exit_position = (maze_size - 1, maze_size - 2)
 
-# Q-learning hyperparameters
-alpha = 0.1        # Learning rate
-gamma = 0.9        # Discount factor
-epsilon = 0.1      # Exploration rate
-num_episodes = 500  # Number of training episodes
+# Define colors for walls, paths, and current position
+cmap = colors.ListedColormap(['white', 'black', 'blue'])
+norm = colors.BoundaryNorm([0, 0.5, 1.5, 2.5], cmap.N)
 
-# Action space: up, down, left, right
-actions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-action_size = len(actions)
-Q_table = np.zeros((maze_size, maze_size, action_size))  # Initialize Q-table
-
-# Generate a solvable maze
+# Common maze generation
 def generate_solvable_maze(size):
     maze = np.ones((size, size))
     maze[start_position] = 0
@@ -54,92 +46,99 @@ def generate_solvable_maze(size):
                         break
 
     add_dead_ends()
-
-    # Ensure entire top row is a black wall except for the start
     maze[0, :] = 1
     maze[start_position] = 0
-
     return maze
 
 maze = generate_solvable_maze(maze_size)
 
-# Define reward function
-def get_reward(position):
-    if position == exit_position:
-        return 100  # Reward for reaching the goal
-    elif maze[position] == 1:
-        return -10  # Penalty for hitting a wall
-    else:
-        return -0.1  # Small penalty for each step
+# Q-learning setup
+alpha, gamma, epsilon = 0.1, 0.9, 0.1
+num_episodes = 500
+actions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+action_size = len(actions)
+Q_table = np.zeros((maze_size, maze_size, action_size))
 
-# Check if a move is valid
-def is_valid_move(x, y):
-    return 0 <= x < maze_size and 0 <= y < maze_size and maze[x, y] == 0
-
-# Q-learning training function
 def train_agent():
     for episode in range(num_episodes):
         position = start_position
         while position != exit_position:
             x, y = position
-
-            # Choose action using epsilon-greedy strategy
             if random.uniform(0, 1) < epsilon:
-                action_index = random.randint(0, action_size - 1)  # Explore
+                action_index = random.randint(0, action_size - 1)
             else:
-                action_index = np.argmax(Q_table[x, y])  # Exploit
-
-            # Take action
+                action_index = np.argmax(Q_table[x, y])
             dx, dy = actions[action_index]
             new_x, new_y = x + dx, y + dy
-            if is_valid_move(new_x, new_y):
+            if 0 <= new_x < maze_size and 0 <= new_y < maze_size and maze[new_x, new_y] == 0:
                 next_position = (new_x, new_y)
             else:
                 next_position = position
-
-            # Get reward
-            reward = get_reward(next_position)
-
-            # Q-learning update
+            reward = 100 if next_position == exit_position else -0.1
             old_value = Q_table[x, y, action_index]
             next_max = np.max(Q_table[new_x, new_y])
             Q_table[x, y, action_index] = (1 - alpha) * old_value + alpha * (reward + gamma * next_max)
-
-            # Move to the next position
             position = next_position
 
-# Train the agent
 train_agent()
 
 # Visualization setup
-cmap = colors.ListedColormap(['white', 'black', 'blue'])
-norm = colors.BoundaryNorm([0, 0.5, 1.5, 2.5], cmap.N)
-fig, ax = plt.subplots()
-img = ax.imshow(maze, cmap=cmap, norm=norm, interpolation='nearest')
-object_position = list(start_position)
-path_stack = [start_position]
-start_time = time.time()
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+mazes = [maze.copy(), maze.copy()]
+imgs = [axes[0].imshow(mazes[0], cmap=cmap, norm=norm),
+        axes[1].imshow(mazes[1], cmap=cmap, norm=norm)]
+axes[0].set_title("Random Navigation")
+axes[1].set_title("Q-Learning Navigation")
 
-# Animation for showing the learned path
+object_positions = [list(start_position), list(start_position)]
+path_stacks = [[start_position], []]  # Path stack for random navigation
+visited = [set(), set()]  # Visited cells for each algorithm
+
+start_times = [time.time(), time.time()]
+end_times = [None, None]  # To record the completion time for each algorithm
+
 def update(frame):
-    global object_position
-    x, y = object_position
+    global end_times
+    for idx in range(2):
+        # Skip updates for completed algorithms
+        if end_times[idx] is not None:
+            continue
 
-    # Stop the animation if the agent reaches the exit
-    if object_position == exit_position:
-        ani.event_source.stop()
-        end_time = time.time()
-        print(f"Maze completed in {end_time - start_time:.2f} seconds")
-    else:
-        action_index = np.argmax(Q_table[x, y])  # Choose best learned action
-        dx, dy = actions[action_index]
-        new_x, new_y = x + dx, y + dy
-        if is_valid_move(new_x, new_y):
-            object_position = (new_x, new_y)
-            maze[new_x, new_y] = 3  # Mark visited path for visualization
+        x, y = object_positions[idx]
 
-        img.set_data(maze)
-    return [img]
+        # Stop and record the time if the agent reaches the exit
+        if (x, y) == exit_position:
+            end_times[idx] = time.time()
+            elapsed_time = end_times[idx] - start_times[idx]
+            print(f"Algorithm {idx+1} completed in {elapsed_time:.2f} seconds")
+            continue
+
+        if idx == 0:  # Random navigation with backtracking
+            moves = [(dx, dy) for dx, dy in actions if
+                     0 <= x+dx < maze_size and 0 <= y+dy < maze_size and mazes[idx][x+dx, y+dy] == 0 and (x+dx, y+dy) not in visited[idx]]
+            if moves:
+                dx, dy = random.choice(moves)
+                nx, ny = x + dx, y + dy
+                visited[idx].add((nx, ny))
+                path_stacks[idx].append((nx, ny))
+                object_positions[idx] = [nx, ny]
+            elif path_stacks[idx]:
+                nx, ny = path_stacks[idx].pop()
+                object_positions[idx] = [nx, ny]
+        else:  # Q-learning
+            action_index = np.argmax(Q_table[x, y])
+            dx, dy = actions[action_index]
+            if 0 <= x+dx < maze_size and 0 <= y+dy < maze_size and mazes[idx][x+dx, y+dy] == 0:
+                object_positions[idx] = [x+dx, y+dy]
+
+        # Update the maze visualization
+        nx, ny = object_positions[idx]
+        mazes[idx][x, y] = 0  # Reset current position
+        mazes[idx][nx, ny] = 3  # Mark new position
+        imgs[idx].set_data(mazes[idx])
+
+    return imgs
 
 ani = FuncAnimation(fig, update, frames=200, blit=True, repeat=False)
+plt.tight_layout()
 plt.show()
