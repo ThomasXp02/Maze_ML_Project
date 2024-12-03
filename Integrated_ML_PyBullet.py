@@ -193,14 +193,12 @@ ani.save('maze_navigation.gif', writer='pillow', fps=10)
 plt.tight_layout()
 plt.show()
 
-#%%  Pybullet Simulation
-
 # PyBullet 3D simulation setup
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, -9.8)
 
-floor_size = 14
+floor_size = 15
 floor_collision_shape = p.createCollisionShape(shapeType=p.GEOM_BOX, halfExtents=[floor_size, floor_size, 0.1])
 floor_visual_shape = p.createVisualShape(shapeType=p.GEOM_BOX, halfExtents=[floor_size, floor_size, 0.1], rgbaColor=(0.5, 0.5, 0.5, 1))
 p.createMultiBody(baseCollisionShapeIndex=floor_collision_shape, baseVisualShapeIndex=floor_visual_shape, basePosition=[0, 0, 0])
