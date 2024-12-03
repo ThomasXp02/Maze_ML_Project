@@ -140,5 +140,8 @@ def update(frame):
     return imgs
 
 ani = FuncAnimation(fig, update, frames=200, blit=True, repeat=False)
+
+# Save the animation as a GIF
+ani.save('maze_navigation.gif', writer='pillow', fps=10)
 plt.tight_layout()
 plt.show()
