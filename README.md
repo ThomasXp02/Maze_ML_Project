@@ -9,7 +9,7 @@ This python code is programed to randomly create a maze, which is solved side by
 2. Jacob Grossman
 3. Sydni Cobb
 
-## Package Instalation Requirenments (Windows)
+## Package Instalation Requirements (Windows)
 Due to the visualization aspects of this code, 2 packages will need to be installed outside of what are likely are being installed:
 
 ```
