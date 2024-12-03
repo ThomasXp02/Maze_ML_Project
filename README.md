@@ -1,4 +1,4 @@
-# AI Maze Generation and Visualization
+# ML Maze Generation and Visualization
 This python code is programed to randomly create a maze, which is solved side by side in to ways: random movements and machine learning. These two patterns are output in a 2-D gif animating their path through the same randomized maze, with PyBullet visualizing the machine learning version's path through the same maze.
 
 ![maze_navigation_comparison3](https://github.com/user-attachments/assets/f0ea7744-c3eb-4527-837d-aee01ca043f2) 
