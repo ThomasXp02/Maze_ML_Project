@@ -19,7 +19,7 @@ pip install matplotlib
 This assumes that `numpy`, `random`, `time`, and `collections`. 
 
 ## Outcomes
-There are 2 outputs from this code:
+There are 2 outputs from Integrated_ML_PyBullet.py:
 1. A side-by-side gif of a randomized maze with the random and machine learning paths.
 2. A console output tracking the times each version take to complete the maze.
 3. PyBullet visulaization of the machine learning version of the maze in PyBullet's GUI.
