@@ -29,3 +29,4 @@ There are 3 outputs from `Integrated_ML_PyBullet.py`:
 - https://techvidvan.com/tutorials/reinforcement-learning/
 - https://github.com/bulletphysics/bullet3/tree/master
 - https://www.datacamp.com/tutorial/bellman-equation-reinforcement-learning
+- https://www.kdnuggets.com/2022/06/beginner-guide-q-learning.html
